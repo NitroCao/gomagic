@@ -1,0 +1,74 @@
+linters-settings:
+  errcheck:
+    check-type-assertions: true
+    check-blank: true
+  govet:
+    check-shadowing: false
+  gofmt:
+    simplify: false
+  revive:
+    ignore-generated-header: true
+  gocyclo:
+    min-complexity: 20
+  dupl:
+    threshold: 100
+  goconst:
+    min-len: 3
+    min-occurrences: 3
+  misspell:
+    locale: US
+  goimports:
+    local-prefixes: cloudguard
+  gosec:
+    excludes:
+      - G204
+      - G402
+
+linters:
+  disable-all: true
+  enable:
+    - structcheck
+    - ineffassign
+    - typecheck
+    - govet
+    - errcheck
+    - varcheck
+    - deadcode
+    - revive
+    - gosec
+    - unconvert
+    - goconst
+    - gocyclo
+    - gofmt
+    - goimports
+    - misspell
+
+run:
+  go: "1.18"
+  skip-files:
+    - ".*._mock.go$"
+    - ".*._test.go$"
+    - "integration/*"
+
+issues:
+  exclude-rules:
+    - linters:
+        - gosec
+      text: "G304: Potential file inclusion"
+    - linters:
+        - gosec
+      text: "Deferring unsafe method"
+    - linters:
+        - errcheck
+      text: "Close` is not checked"
+    - linters:
+        - errcheck
+      text: "os.*` is not checked"
+    - linters:
+        - golint
+      text: "a blank import should be only in a main or test package"
+  exclude:
+    - "should have a package comment,
+      unless it's in another file for this package"
+  exclude-use-default: false
+  max-same-issues: 0
