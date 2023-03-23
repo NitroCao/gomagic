@@ -1,4 +1,4 @@
-module github.com/NitroCao/gomagic
+module github.com/nitrocao/gomagic
 
 go 1.16
 
