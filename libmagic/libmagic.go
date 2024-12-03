@@ -67,6 +67,35 @@ func (m *Magic) MagicLoad(files []string) error {
 	return nil
 }
 
+func (m *Magic) MagicLoadBuffers(buffers [][]byte) error {
+	m.lock.Lock()
+	defer m.lock.Unlock()
+
+	var (
+		sizeType     *C.char
+		nBuffers     = len(buffers)
+		sizes        = C.malloc(C.size_t(nBuffers) * C.sizeof_size_t)
+		tmpSizesPtr  = sizes
+		buffersArray = C.malloc(C.size_t(nBuffers) * C.size_t(unsafe.Sizeof(sizeType)))
+		tmpBufPtr    = buffersArray
+		tmpPtr       = (*unsafe.Pointer)(buffersArray)
+	)
+	defer C.free(sizes)
+	defer C.free(buffersArray)
+
+	for i := 0; i < nBuffers; i++ {
+		tmpSizesPtr = unsafe.Pointer(uintptr(tmpSizesPtr) + C.sizeof_size_t*uintptr(i))
+		*((*C.size_t)(tmpSizesPtr)) = C.size_t(len(buffers[i]))
+		tmpBufPtr = unsafe.Pointer(uintptr(tmpBufPtr) + unsafe.Sizeof(sizeType)*uintptr(i))
+		*((*unsafe.Pointer)(tmpBufPtr)) = unsafe.Pointer(&buffers[i][0])
+	}
+	if C.magic_load_buffers(m.handle, tmpPtr, (*C.size_t)(sizes), C.size_t(nBuffers)) == C.int(-1) {
+		return m.magicError("failed to load database buffers")
+	}
+
+	return nil
+}
+
 func (m *Magic) Close() {
 	m.lock.Lock()
 	m.lock.Unlock()

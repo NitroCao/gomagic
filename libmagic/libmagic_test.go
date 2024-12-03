@@ -1,6 +1,7 @@
 package libmagic
 
 import (
+	"os"
 	"sync"
 	"syscall"
 	"testing"
@@ -20,6 +21,25 @@ func (s *MagicTestSuite) SetupTest() {
 	s.magic, err = NewMagic(MagicMimeType | MagicError)
 	require.NoError(s.T(), err)
 	require.NoError(s.T(), s.magic.MagicLoad([]string{"../testdata/magic.mgc"}))
+}
+
+func (s *MagicTestSuite) TestMagicLoadBuffers() {
+	m, err := NewMagic(MagicMimeType | MagicError)
+	require.NoError(s.T(), err, "failed to create magic descriptor")
+	defer m.Close()
+	dbBuffers := make([][]byte, 2)
+	dbBuffers[0], err = os.ReadFile("../testdata/magic.mgc")
+	require.NoError(s.T(), err, "failed to read first database")
+	dbBuffers[1], err = os.ReadFile("../testdata/magic2.mgc")
+	require.NoError(s.T(), err, "failed to read second database")
+
+	err = m.MagicLoadBuffers(dbBuffers)
+	s.NoError(err, "MagicLoadBuffers() failed")
+
+	var fileType string
+	fileType, err = m.MagicFile("../testdata/magic.mgc")
+	s.NoError(err, "MagicFile() failed")
+	s.Equal("application/x-file", fileType)
 }
 
 func (s *MagicTestSuite) TestMagicLoad() {
@@ -54,7 +74,7 @@ func (s *MagicTestSuite) TestMagicLoad() {
 			name: "happy path",
 			args: args{
 				flags: MagicMimeType,
-				files: []string{"../testdata/magic.mgc", "/usr/local/opt/libmagic/share/misc/magic.mgc"},
+				files: []string{"../testdata/magic.mgc", "../testdata/magic2.mgc"},
 			},
 			wantError: false,
 		},
@@ -104,7 +124,7 @@ func (s *MagicTestSuite) TestMagicFile() {
 				filename: "../testdata/magic.mgc",
 			},
 			wantError: false,
-			want:      "application/octet-stream",
+			want:      "application/x-file",
 		},
 		{
 			name: "invalid input file",
@@ -201,7 +221,7 @@ func (s *MagicTestSuite) TestMagicDescriptor() {
 				filename: "../testdata/magic.mgc",
 			},
 			wantError: false,
-			want:      "application/octet-stream",
+			want:      "application/x-file",
 		},
 		{
 			name: "invalid input file",
